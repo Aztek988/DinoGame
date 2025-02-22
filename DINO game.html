@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dino Game</title>
+    <style>
+        #gameCanvas {
+            border: 1px solid black;
+        }
+        #gameOver {
+            display: none;
+            font-size: 24px;
+            color: red;
+            margin: 0;
+        }
+        #score {
+            font-size: 20px;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <div id="gameOver">Game Over! Press Space to Restart</div>
+    <div id="score">Score: 0 | High Score: 0</div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameOverText = document.getElementById('gameOver');
+        const scoreText = document.getElementById('score');
+
+        let dinoImg = new Image();
+        dinoImg.src = 'dino.jpg'; // Path to dino image
+
+        let cactusImg = new Image();
+        cactusImg.src = 'cactus.webp'; // Path to cactus image
+
+        let dino = { x: 50, y: 300, width: 50, height: 50, yVelocity: 0, isJumping: false };
+        let gravity = 0.5;
+        let obstacles = [{ x: 800, y: 300, width: 50, height: 50 }];
+        let gameOver = false;
+        let score = 0;
+        let highScore = 0;
+
+        function resetGame() {
+            dino = { x: 50, y: 300, width: 50, height: 50, yVelocity: 0, isJumping: false };
+            obstacles = [{ x: 800, y: 300, width: 50, height: 50 }];
+            gameOver = false;
+            score = 0;
+            gameOverText.style.display = 'none';
+            updateScore();
+            gameLoop();
+        }
+
+        function updateScore() {
+            scoreText.textContent = `Score: ${score} | High Score: ${highScore}`;
+        }
+
+        function drawDino() {
+            ctx.drawImage(dinoImg, dino.x, dino.y, dino.width, dino.height);
+        }
+
+        function drawObstacles() {
+            for (let obstacle of obstacles) {
+                ctx.drawImage(cactusImg, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            }
+        }
+
+        function drawGround() {
+            ctx.strokeStyle = 'blue';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(0, 350);
+            ctx.lineTo(canvas.width, 350);
+            ctx.stroke();
+        }
+
+        function updateObstacles() {
+            for (let obstacle of obstacles) {
+                obstacle.x -= 5;
+                if (obstacle.x + obstacle.width < 0) {
+                    obstacle.x = canvas.width;
+                    score++;
+                    if (score > highScore) {
+                        highScore = score;
+                    }
+                    updateScore();
+                }
+            }
+        }
+
+        function updateDino() {
+            if (dino.isJumping) {
+                dino.y -= dino.yVelocity;
+                dino.yVelocity -= gravity;
+                if (dino.y >= 300) {
+                    dino.y = 300;
+                    dino.isJumping = false;
+                    dino.yVelocity = 0;
+                }
+            }
+        }
+
+        function jump() {
+            if (!dino.isJumping) {
+                dino.isJumping = true;
+                dino.yVelocity = 10;
+            }
+        }
+
+        function checkCollision() {
+            for (let obstacle of obstacles) {
+                if (dino.x < obstacle.x + obstacle.width &&
+                    dino.x + dino.width - 10 > obstacle.x &&  // Adjusted collision detection
+                    dino.y < obstacle.y + obstacle.height &&
+                    dino.y + dino.height > obstacle.y) {
+                    gameOverText.style.display = 'block';
+                    cancelAnimationFrame(gameLoopId);
+                    gameOver = true;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Space') {
+                if (gameOver) {
+                    resetGame();
+                } else {
+                    jump();
+                }
+            }
+        });
+
+        let gameLoopId;
+
+        function gameLoop() {
+            if (gameOver) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawDino();
+            drawObstacles();
+            drawGround();
+            updateDino();
+            updateObstacles();
+            if (!checkCollision()) {
+                gameLoopId = requestAnimationFrame(gameLoop);
+            }
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
